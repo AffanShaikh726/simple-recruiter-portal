@@ -38,9 +38,11 @@ export class DashboardComponent implements OnInit {
   private loadUploadedFiles(): void {
     if (!this.supabaseService.currentUser) return;
     
+    console.log('Loading uploaded files for user:', this.supabaseService.currentUser.id);
     this.isLoading = true;
     this.supabaseService.listFiles().subscribe({
       next: (files) => {
+        console.log('Files loaded:', files);
         this.uploadedFiles = files;
         this.isLoading = false;
       },
@@ -103,7 +105,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
   
-    // Use the simplest possible path
+    // Use the simplest possible path - just the filename
     const filePath = file.name;
     
     // Log the path to verify
@@ -111,6 +113,13 @@ export class DashboardComponent implements OnInit {
 
     this.supabaseService.uploadFile(file, filePath).subscribe({
       next: (result) => {
+        if (result.error) {
+          this.isLoading = false;
+          this.uploadError = 'Failed to upload file';
+          console.error('Upload error in result:', result.error);
+          return;
+        }
+        
         this.supabaseService.getFileUrl(filePath).subscribe({
           next: (url) => {
             this.isLoading = false;
@@ -123,6 +132,9 @@ export class DashboardComponent implements OnInit {
               url: url,
               date: new Date()
             });
+            
+            // Refresh the file list to ensure we have the latest data
+            this.loadUploadedFiles();
             
             // Reset form
             this.uploadForm.reset();

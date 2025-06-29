@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient, User, AuthResponse, Session } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 import { Environment } from '../../environments/environment.interface';
-import { BehaviorSubject, Observable, from, of, firstValueFrom } from 'rxjs';
-import { map, catchError, tap, finalize } from 'rxjs/operators';
+import { BehaviorSubject, Observable, from, of, firstValueFrom, isObservable } from 'rxjs';
+import { map, catchError, tap, finalize, switchMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -225,10 +225,21 @@ export class SupabaseService {
       return of({ error: 'Invalid file object' });
     }
     
-    // Try with a different approach to bypass RLS issues
+    // Get current user ID to prefix the file path
+    const userId = this.currentUser?.id;
+    if (!userId) {
+      console.error('Cannot upload file: No authenticated user');
+      return of({ error: 'User not authenticated' });
+    }
+    
+    // Create a path with user ID as prefix to separate files by user
+    const userFilePath = `${userId}/${path}`;
+    console.log('Using user-specific path:', userFilePath);
+    
+    // Upload with user ID prefix
     return from(this.supabase.storage
       .from('uploads') // Make sure this matches your bucket name exactly
-      .upload(path, file, {
+      .upload(userFilePath, file, {
         upsert: true,
         cacheControl: '3600',
         contentType: file.type // Explicitly set content type
@@ -249,29 +260,81 @@ export class SupabaseService {
   }
   
   getFileUrl(path: string): Observable<string> {
+    // Get current user ID to prefix the file path
+    const userId = this.currentUser?.id;
+    if (!userId) {
+      console.error('Cannot get file URL: No authenticated user');
+      return of('');
+    }
+    
+    // If path already contains the user ID prefix, use it as is
+    const fullPath = path.startsWith(`${userId}/`) ? path : `${userId}/${path}`;
+    
     const { data } = this.supabase.storage
       .from('uploads')
-      .getPublicUrl(path);
+      .getPublicUrl(fullPath);
     
     return of(data.publicUrl);
   }
 
   listFiles(): Observable<{name: string, url: string, date: Date}[]> {
+    // Get current user ID to filter files
+    const userId = this.currentUser?.id;
+    if (!userId) {
+      console.error('Cannot list files: No authenticated user');
+      return of([]);
+    }
+    
+    // Try to list files with user ID prefix first
+    const prefix = `${userId}/`;
+    console.log('Listing files with prefix:', prefix);
+    
+    // First try to list files with the user ID prefix
     return from(this.supabase.storage
       .from('uploads')
-      .list()
+      .list(prefix)
     ).pipe(
       map(({ data: files, error }) => {
-        if (error) throw error;
+        if (error) {
+          console.error('Error listing files with prefix:', error);
+          throw error;
+        }
         
-        // For each file, get its public URL
+        if (!files || files.length === 0) {
+          console.log('No files found with user ID prefix, trying without prefix');
+          // If no files found with prefix, try listing all files (for backward compatibility)
+          return from(this.supabase.storage.from('uploads').list()).pipe(
+            map(({ data: allFiles, error: allError }) => {
+              if (allError) throw allError;
+              
+              // Filter files by checking if they don't have a user ID prefix
+              // This is for backward compatibility with files uploaded before the change
+              return allFiles
+                .filter(file => !file.name.includes('/')) // Simple files without user ID prefix
+                .map(file => ({
+                  name: file.name,
+                  url: this.supabase.storage
+                    .from('uploads')
+                    .getPublicUrl(file.name).data.publicUrl,
+                  date: new Date(file.created_at || new Date().toISOString())
+                }));
+            })
+          );
+        }
+        
+        // For each file with user ID prefix, get its public URL
         return files.map(file => ({
-          name: file.name,
+          name: file.name, // Just show the filename without the prefix in the UI
           url: this.supabase.storage
             .from('uploads')
-            .getPublicUrl(file.name).data.publicUrl,
+            .getPublicUrl(`${prefix}${file.name}`).data.publicUrl,
           date: new Date(file.created_at || new Date().toISOString())
         }));
+      }),
+      switchMap((result: Observable<{name: string, url: string, date: Date}[]> | {name: string, url: string, date: Date}[]) => {
+        // If result is an Observable (from the inner from() call), return it
+        // Otherwise wrap the array in an Observable
+        return isObservable(result) ? result : of(result);
       }),
       catchError(error => {
         console.error('Error listing files:', error);

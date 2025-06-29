@@ -12,10 +12,18 @@ export class CandidateService {
   
   // Get all candidates for the current user
   getCandidates(): Observable<Candidate[]> {
+    // Get current user ID from SupabaseService
+    const userId = this.supabaseService.currentUser?.id;
+    
+    if (!userId) {
+      throw new Error('User is not authenticated');
+    }
+    
     return from(
       this.supabaseService.supabase
         .from('candidates')
         .select('*')
+        .eq('user_id', userId) // Only get candidates for the current user
         .order('date_added', { ascending: false })
     ).pipe(
       map(response => {

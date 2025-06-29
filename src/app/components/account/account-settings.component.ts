@@ -43,12 +43,31 @@ export class AccountSettingsComponent implements OnInit {
     }
     
     this.currentUser = this.supabaseService.currentUser;
+    this.isLoading = true;
     
-    // Populate form with current user data if available
+    // First, set the email from the auth user
     this.profileForm.patchValue({
-      email: this.currentUser.email || '',
-      fullName: this.currentUser.displayName || '',
-      phoneNumber: this.currentUser.phoneNumber || ''
+      email: this.currentUser.email || ''
+    });
+    
+    // Then fetch the user profile from the database
+    this.supabaseService.getUserProfile(this.currentUser.id).subscribe({
+      next: (profile) => {
+        console.log('Fetched user profile:', profile);
+        if (profile) {
+          // Update form with profile data from database
+          this.profileForm.patchValue({
+            fullName: profile.full_name || '',
+            phoneNumber: profile.phone || '',
+            position: profile.position || ''
+          });
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error fetching profile:', error);
+        this.isLoading = false;
+      }
     });
   }
 
@@ -61,12 +80,31 @@ export class AccountSettingsComponent implements OnInit {
     this.updateSuccess = false;
     this.updateError = '';
 
-    // In a real application, you would update the user profile in Supabase
-    // For now, we'll just simulate a successful update
-    setTimeout(() => {
-      this.isLoading = false;
-      this.updateSuccess = true;
-    }, 1000);
+    // Get form values
+    const formValues = this.profileForm.getRawValue();
+    
+    // Create profile object to update
+    const profileData = {
+      user_id: this.currentUser.id,
+      full_name: formValues.fullName,
+      phone: formValues.phoneNumber,
+      position: formValues.position,
+      updated_at: new Date().toISOString()
+    };
+    
+    // Update the profile in Supabase
+    this.supabaseService.updateUserProfile(profileData).subscribe({
+      next: (data) => {
+        console.log('Profile updated successfully:', data);
+        this.isLoading = false;
+        this.updateSuccess = true;
+      },
+      error: (error) => {
+        console.error('Error updating profile:', error);
+        this.isLoading = false;
+        this.updateError = 'Failed to update profile. Please try again.';
+      }
+    });
   }
 
   navigateToDashboard(): void {
