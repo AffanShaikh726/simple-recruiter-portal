@@ -1,0 +1,102 @@
+<div class="container mx-auto p-6">
+  <div class="max-w-4xl mx-auto">
+    <!-- Back button and title -->
+    <div class="flex items-center mb-6">
+      <button (click)="goBack()" class="btn btn-ghost btn-circle mr-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+      </button>
+      <h1 class="text-2xl font-bold">Candidate Details</h1>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <app-loader size="lg"></app-loader>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="error && !isLoading" class="alert alert-error shadow-lg mb-6">
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+    </div>
+
+    <!-- Candidate details -->
+    <div *ngIf="candidate && !isLoading" class="bg-base-100 shadow-lg rounded-lg overflow-hidden">
+      <div class="p-6">
+        <!-- Header with name and status -->
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
+          <h2 class="text-2xl font-bold mb-2 sm:mb-0">{{ candidate.name }}</h2>
+          <span [class]="getStatusBadgeClass(candidate.status)" data-theme="light">
+            {{ candidate.status | titlecase }}
+          </span>
+        </div>
+
+        <!-- Main info grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Left column -->
+          <div>
+            <div class="mb-4">
+              <h3 class="text-lg font-semibold mb-2">Position</h3>
+              <p>{{ candidate.position }}</p>
+            </div>
+            
+            <div class="mb-4">
+              <h3 class="text-lg font-semibold mb-2">Contact Information</h3>
+              <div class="flex items-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span>{{ candidate.email }}</span>
+              </div>
+              <div *ngIf="candidate.phone" class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span>{{ candidate.phone }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right column -->
+          <div>
+            <div class="mb-4">
+              <h3 class="text-lg font-semibold mb-2">Date Added</h3>
+              <p>{{ candidate.dateAdded | date:'medium' }}</p>
+            </div>
+            
+            <div *ngIf="candidate.resumeUrl" class="mb-4">
+              <h3 class="text-lg font-semibold mb-2">Resume</h3>
+              <a [href]="candidate.resumeUrl" target="_blank" class="btn btn-outline btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                View Resume
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes section -->
+        <div *ngIf="candidate.notes" class="mb-6">
+          <h3 class="text-lg font-semibold mb-2">Notes</h3>
+          <div class="bg-base-200 p-4 rounded-lg whitespace-pre-wrap">{{ candidate.notes }}</div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="flex justify-between mt-8">
+          <button (click)="goBack()" class="btn btn-outline">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Candidates
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

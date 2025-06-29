@@ -1,1 +1,41 @@
 /* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Your custom styles below */
+:root {
+  --background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity, 1)));
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-color);
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--background-color);
+}
+
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--background-color);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background-color);
+}
+
+/* Ensure job listings container fills available space */
+.job-listings-container {
+  min-height: calc(100vh - 4rem); /* Adjust based on your header height */
+  background-color: var(--background-color);
+}

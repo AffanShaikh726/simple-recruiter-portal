@@ -1,12 +1,52 @@
-# SimpleRecruiterPortal
+# Simple Recruiter Portal
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.15.
+A modern web application for recruiters to manage their workflow. Built with Angular, Firebase, Tailwind CSS, and daisyUI.
 
-## Development server
+## Features
 
-To start a local development server, run:
+- **User Authentication**: Secure login and registration with Firebase Authentication
+- **Dashboard**: User-friendly interface to manage recruiting activities
+- **Document Management**: Upload and manage candidate resumes and documents
+- **Account Settings**: Personal profile management
+- **Responsive Design**: Optimized for both desktop and mobile devices
+
+## Technologies Used
+
+- **Frontend**: Angular 19+ with Standalone Components
+- **Authentication & Storage**: Firebase SDK
+- **Styling**: Tailwind CSS and daisyUI
+- **State Management**: RxJS Observables
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- Angular CLI v19+
+- Firebase Account
+
+### Firebase Configuration
+
+Before running the application, you need to set up your Firebase project:
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Authentication (Email/Password) and Storage services
+3. Get your Firebase configuration from Project Settings
+4. Update the configuration in `src/environments/environment.ts`
+
+### Installation
 
 ```bash
+# Clone the repository (or download it)
+git clone <repository-url>
+
+# Navigate to the project directory
+cd simple-recruiter-portal
+
+# Install dependencies
+npm install
+
+# Start the development server
 ng serve
 ```
 

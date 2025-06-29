@@ -1,0 +1,16 @@
+// Additional custom styles can be added here
+// Most styling is handled by Tailwind classes in the HTML template
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.form-error {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

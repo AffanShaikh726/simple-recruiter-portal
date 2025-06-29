@@ -1,0 +1,107 @@
+import { Injectable } from '@angular/core';
+import { createClient, SupabaseClient, User, AuthResponse } from '@supabase/supabase-js';
+import { environment } from '../../environments/environment';
+import { Environment } from '../../environments/environment.interface';
+import { BehaviorSubject, Observable, from, of } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class SupabaseService {
+  private supabase: SupabaseClient;
+  private isAuthenticatedSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private currentUserSubject: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
+  
+  constructor() {
+    // Check if Supabase config exists using type assertion to handle potential missing properties
+    const env = environment as Environment;
+    
+    if (!env.supabase || !env.supabase.url || !env.supabase.key) {
+      console.error('Supabase configuration is missing in environment file');
+      throw new Error('Supabase configuration is missing');
+    }
+    
+    this.supabase = createClient(
+      env.supabase.url, 
+      env.supabase.key
+    );
+    
+    // Check current session and set authentication state
+    this.checkAndSetSession();
+    
+    // Listen for auth state changes
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      this.isAuthenticatedSubject.next(!!session);
+      this.currentUserSubject.next(session?.user || null);
+    });
+  }
+  
+  private async checkAndSetSession() {
+    const { data: { session } } = await this.supabase.auth.getSession();
+    this.isAuthenticatedSubject.next(!!session);
+    this.currentUserSubject.next(session?.user || null);
+  }
+  
+  // Authentication methods
+  register(email: string, password: string): Observable<AuthResponse> {
+    return from(this.supabase.auth.signUp({
+      email,
+      password
+    })).pipe(
+      tap(response => {
+        if (response.data.user) {
+          this.currentUserSubject.next(response.data.user);
+        }
+      })
+    );
+  }
+  
+  login(email: string, password: string): Observable<AuthResponse> {
+    return from(this.supabase.auth.signInWithPassword({
+      email,
+      password
+    })).pipe(
+      tap(response => {
+        if (response.data.user) {
+          this.currentUserSubject.next(response.data.user);
+        }
+      })
+    );
+  }
+  
+  logout(): Observable<any> {
+    return from(this.supabase.auth.signOut()).pipe(
+      tap(() => {
+        this.currentUserSubject.next(null);
+      })
+    );
+  }
+  
+  get isAuthenticated(): Observable<boolean> {
+    return this.isAuthenticatedSubject.asObservable();
+  }
+  
+  get currentUser(): User | null {
+    return this.currentUserSubject.value;
+  }
+  
+  // Storage methods
+  uploadFile(file: File, path: string): Observable<any> {
+    const filePath = path;
+    return from(this.supabase.storage
+      .from('uploads') // Replace with your bucket name
+      .upload(filePath, file, {
+        upsert: true
+      })
+    );
+  }
+  
+  getFileUrl(path: string): Observable<string> {
+    const { data } = this.supabase.storage
+      .from('uploads') // Replace with your bucket name
+      .getPublicUrl(path);
+    
+    return of(data.publicUrl);
+  }
+}

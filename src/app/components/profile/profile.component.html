@@ -1,0 +1,89 @@
+<div class="container mx-auto p-6">
+  <div class="max-w-2xl mx-auto">
+    <div class="flex items-center mb-6">
+      <button (click)="navigateToDashboard()" class="btn btn-ghost btn-circle mr-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+      </button>
+      <h1 class="text-2xl font-bold">Profile Settings</h1>
+    </div>
+
+    <div class="card bg-base-100 shadow-lg">
+      <div class="card-body">
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-5">
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Full Name</span>
+            </label>
+            <input 
+              type="text" 
+              formControlName="fullName"
+              class="input input-bordered" />
+            <div *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched" class="text-error text-sm mt-1">
+              Full name is required
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Email</span>
+            </label>
+            <input 
+              type="email" 
+              [value]="currentUser?.email || ''"
+              class="input input-bordered opacity-70" 
+              readonly 
+              disabled />
+            <label class="label">
+              <span class="label-text-alt text-base-content/70">Email cannot be changed</span>
+            </label>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Phone Number</span>
+            </label>
+            <input 
+              type="tel" 
+              formControlName="phoneNumber"
+              class="input input-bordered" />
+            <div *ngIf="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched" class="text-error text-sm mt-1">
+              Please enter a valid 10-digit phone number
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Position</span>
+            </label>
+            <input 
+              type="text" 
+              formControlName="position"
+              class="input input-bordered" />
+          </div>
+
+          <div *ngIf="updateSuccess" class="alert alert-success">
+            Profile updated successfully!
+          </div>
+
+          <div *ngIf="updateError" class="alert alert-error">
+            {{ updateError }}
+          </div>
+
+          <div class="form-control mt-6">
+            <button 
+              type="submit" 
+              class="btn btn-primary" 
+              [disabled]="profileForm.invalid || isLoading">
+              <span *ngIf="isLoading">
+                <app-loader size="xs" [centered]="false"></app-loader>
+              </span>
+              Update Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
