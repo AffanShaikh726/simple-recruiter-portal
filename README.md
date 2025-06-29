@@ -1,99 +1,45 @@
 # Simple Recruiter Portal
 
-A modern web application for recruiters to manage their workflow. Built with Angular, Firebase, Tailwind CSS, and daisyUI.
+A modern web application for recruiters to manage their workflow, candidates, and job postings. Built with Angular, Supabase, Tailwind CSS, and daisyUI.
 
-## Features
+## 🚀 Features
 
-- **User Authentication**: Secure login and registration with Firebase Authentication
-- **Dashboard**: User-friendly interface to manage recruiting activities
-- **Document Management**: Upload and manage candidate resumes and documents
-- **Account Settings**: Personal profile management
-- **Responsive Design**: Optimized for both desktop and mobile devices
+- **User Authentication**
+  - Secure login and registration with Supabase Auth
+  - Email/password authentication
+  - Protected routes with auth guards
 
-## Technologies Used
+- **Dashboard**
+  - Overview of key recruiting metrics
+  - Quick access to recent activities
+  - Upcoming interviews and tasks
+
+- **Candidate Management**
+  - Add, view, and manage candidate profiles
+  - Track candidate status and notes
+  - Store and manage candidate documents with Supabase Storage
+
+- **Job Management**
+  - Create and manage job postings
+  - View job details and applications
+  - Track candidate pipeline for each position
+
+- **Profile & Settings**
+  - Update personal information
+  - Change password
+  - Configure notification preferences
+
+## 🛠️ Technologies Used
 
 - **Frontend**: Angular 19+ with Standalone Components
-- **Authentication & Storage**: Firebase SDK
-- **Styling**: Tailwind CSS and daisyUI
-- **State Management**: RxJS Observables
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v18+)
-- Angular CLI v19+
-- Firebase Account
-
-### Firebase Configuration
-
-Before running the application, you need to set up your Firebase project:
-
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-2. Enable Authentication (Email/Password) and Storage services
-3. Get your Firebase configuration from Project Settings
-4. Update the configuration in `src/environments/environment.ts`
-
-### Installation
-
-```bash
-# Clone the repository (or download it)
-git clone <repository-url>
-
-# Navigate to the project directory
-cd simple-recruiter-portal
-
-# Install dependencies
-npm install
-
-# Start the development server
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **UI/UX**: 
+  - Tailwind CSS for utility-first styling
+  - daisyUI component library
+  - Responsive design for all devices
+- **Backend**: 
+  - Supabase Authentication
+  - Supabase PostgreSQL Database
+  - Supabase Storage for file uploads
+  - Row Level Security (RLS) for data protection
+- **State Management**: RxJS Observables & Services
+- **Form Handling**: Reactive Forms with Validation
