@@ -345,19 +345,93 @@ export class SupabaseService {
 
   // User profile methods
   getUserProfile(userId: string): Observable<any> {
+    // First try to get all profiles for this user
     return from(this.supabase
       .from('profiles')
       .select('*')
       .eq('user_id', userId)
-      .single()
+      .order('updated_at', { ascending: false }) // Get the most recently updated profile first
     ).pipe(
       map(({ data, error }) => {
         if (error) throw error;
-        return data;
+        
+        if (!data || data.length === 0) {
+          // No profiles found
+          return null;
+        }
+        
+        // If multiple profiles exist, we'll use the most recent one
+        // (handled by returning data[0] from the sorted results)
+        
+        // Return the first (most recent) profile
+        return data[0];
       }),
       catchError(error => {
         console.error('Error fetching user profile:', error);
         return of(null);
+      })
+    );
+  }
+  
+  // Ensure a profile exists for the current user
+  ensureUserProfileExists(): Observable<any> {
+    const user = this.currentUser;
+    if (!user) {
+      console.error('Cannot ensure profile exists: No authenticated user');
+      return of(null);
+    }
+    
+    // First check if we need to clean up duplicate profiles
+    return from(this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+    ).pipe(
+      switchMap(({ data, error }) => {
+        if (error) {
+          console.error('Error checking profiles:', error);
+          return of(null);
+        }
+        
+        if (!data || data.length === 0) {
+          // No profile exists, create a minimal one
+          const minimalProfile = {
+            user_id: user.id,
+            full_name: '',
+            updated_at: new Date().toISOString()
+          };
+          
+          return this.updateUserProfile(minimalProfile);
+        } else if (data.length > 1) {
+          // Multiple profiles exist, keep the most recent one and delete the rest
+          
+          // Sort by updated_at in descending order
+          const sortedProfiles = [...data].sort((a, b) => {
+            return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
+          });
+          
+          const mostRecentProfile = sortedProfiles[0];
+          const profilesToDelete = sortedProfiles.slice(1).map(p => p.id);
+          
+          // Delete all but the most recent profile
+          return from(this.supabase
+            .from('profiles')
+            .delete()
+            .in('id', profilesToDelete)
+          ).pipe(
+            map(() => {
+              // Cleanup complete, return the most recent profile
+              return mostRecentProfile;
+            }),
+            catchError(deleteError => {
+              console.error('Error deleting duplicate profiles:', deleteError);
+              return of(mostRecentProfile); // Still return the most recent profile
+            })
+          );
+        } else {
+          // Just one profile exists, return it
+          return of(data[0]);
+        }
       })
     );
   }
@@ -369,10 +443,35 @@ export class SupabaseService {
     position?: string,
     updated_at?: string
   }): Observable<any> {
+    // First check if a profile exists for this user
     return from(this.supabase
       .from('profiles')
-      .upsert(profile)
+      .select('*')
+      .eq('user_id', profile.user_id)
+      .single()
     ).pipe(
+      switchMap(({ data, error }) => {
+        if (error && error.code !== 'PGRST116') { // PGRST116 is the error code for no rows returned
+          throw error;
+        }
+        
+        if (data) {
+          // Profile exists, update it
+          console.log('Updating existing profile for user:', profile.user_id);
+          return from(this.supabase
+            .from('profiles')
+            .update(profile)
+            .eq('user_id', profile.user_id)
+          );
+        } else {
+          // Profile doesn't exist, insert it
+          console.log('Creating new profile for user:', profile.user_id);
+          return from(this.supabase
+            .from('profiles')
+            .insert(profile)
+          );
+        }
+      }),
       map(({ data, error }) => {
         if (error) throw error;
         return data;

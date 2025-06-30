@@ -53,25 +53,31 @@ export class ProfileComponent implements OnInit {
       email: user.email || ''
     });
     
-    try {
-      const { data, error } = await this.supabaseService.supabase
-        .from('profiles')
-        .select('full_name, phone, position')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error) throw error;
-      
-      this.profileForm.patchValue({
-        fullName: data?.full_name || '',
-        phoneNumber: data?.phone || '',
-        position: data?.position || ''
-      });
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-    } finally {
-      this.isLoading = false;
-    }
+    // First ensure a profile exists for this user
+    this.supabaseService.ensureUserProfileExists().subscribe({
+      next: (profile) => {
+        // Now get the profile (which should definitely exist now)
+        this.supabaseService.getUserProfile(user.id).subscribe({
+          next: (profile) => {
+            if (profile) {
+              // Update form with profile data from database
+              this.profileForm.patchValue({
+                fullName: profile.full_name || '',
+                phoneNumber: profile.phone || '',
+                position: profile.position || ''
+              });
+            }
+            this.isLoading = false;
+          },
+          error: (error) => {
+            this.isLoading = false;
+          }
+        });
+      },
+      error: (error) => {
+        this.isLoading = false;
+      }
+    });
   }
 
   async onSubmit(): Promise<void> {
@@ -92,25 +98,33 @@ export class ProfileComponent implements OnInit {
     try {
       const { fullName, phoneNumber, position } = this.profileForm.value;
       
-      const { error } = await this.supabaseService.supabase
-        .from('profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: fullName,
-          phone: phoneNumber || null,
-          position: position || null,
-          updated_at: new Date().toISOString()
-        });
+      // Use the service method instead of direct Supabase call
+      const profileData = {
+        user_id: user.id,
+        full_name: fullName,
+        phone: phoneNumber || null,
+        position: position || null,
+        updated_at: new Date().toISOString()
+      };
       
-      if (error) throw error;
-      
-      this.updateSuccess = true;
-      setTimeout(() => {
-        this.updateSuccess = false;
-      }, 3000);
+      // Use the service method that properly handles update vs insert
+      this.supabaseService.updateUserProfile(profileData).subscribe({
+        next: (data) => {
+          console.log('Profile updated successfully:', data);
+          this.updateSuccess = true;
+          setTimeout(() => {
+            this.updateSuccess = false;
+          }, 3000);
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error updating profile:', error);
+          this.updateError = error.message || 'An error occurred while updating your profile';
+          this.isLoading = false;
+        }
+      });
     } catch (error: any) {
       this.updateError = error.message || 'An error occurred while updating your profile';
-    } finally {
       this.isLoading = false;
     }
   }

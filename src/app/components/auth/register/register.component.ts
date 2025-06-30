@@ -44,14 +44,38 @@ export class RegisterComponent {
     this.isLoading = true;
     this.errorMessage = '';
     
-    const { email, password } = this.registerForm.value;
+    const { fullName, email, password } = this.registerForm.value;
     
     this.supabaseService.register(email, password).subscribe({
-      next: () => {
-        this.isLoading = false;
-        this.showVerificationModal = true;
-        // We'll show the modal instead of redirecting immediately
-        // this.router.navigate(['/dashboard']);
+      next: (response) => {
+        // After successful registration, create a profile for the user
+        if (response && response.data.user) {
+          const userId = response.data.user.id;
+          
+          // Create profile data
+          const profileData = {
+            user_id: userId,
+            full_name: fullName,
+            updated_at: new Date().toISOString()
+          };
+          
+          // Create the profile using the service method
+          this.supabaseService.updateUserProfile(profileData).subscribe({
+            next: (profileData) => {
+              console.log('Profile created successfully:', profileData);
+              this.isLoading = false;
+              this.showVerificationModal = true;
+            },
+            error: (profileError) => {
+              console.error('Error creating profile:', profileError);
+              this.isLoading = false;
+              this.showVerificationModal = true; // Still show verification modal even if profile creation fails
+            }
+          });
+        } else {
+          this.isLoading = false;
+          this.showVerificationModal = true;
+        }
       },
       error: (error) => {
         this.isLoading = false;

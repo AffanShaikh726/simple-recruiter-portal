@@ -50,22 +50,28 @@ export class AccountSettingsComponent implements OnInit {
       email: this.currentUser.email || ''
     });
     
-    // Then fetch the user profile from the database
-    this.supabaseService.getUserProfile(this.currentUser.id).subscribe({
+    // First ensure a profile exists for this user
+    this.supabaseService.ensureUserProfileExists().subscribe({
       next: (profile) => {
-        console.log('Fetched user profile:', profile);
-        if (profile) {
-          // Update form with profile data from database
-          this.profileForm.patchValue({
-            fullName: profile.full_name || '',
-            phoneNumber: profile.phone || '',
-            position: profile.position || ''
-          });
-        }
-        this.isLoading = false;
+        // Then fetch the user profile from the database
+        this.supabaseService.getUserProfile(this.currentUser.id).subscribe({
+          next: (profile) => {
+            if (profile) {
+              // Update form with profile data from database
+              this.profileForm.patchValue({
+                fullName: profile.full_name || '',
+                phoneNumber: profile.phone || '',
+                position: profile.position || ''
+              });
+            }
+            this.isLoading = false;
+          },
+          error: (error) => {
+            this.isLoading = false;
+          }
+        });
       },
       error: (error) => {
-        console.error('Error fetching profile:', error);
         this.isLoading = false;
       }
     });
