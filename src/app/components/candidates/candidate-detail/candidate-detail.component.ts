@@ -53,13 +53,13 @@ export class CandidateDetailComponent implements OnInit {
     if (!status) return 'badge badge-ghost text-white font-bold';
     switch (status.toLowerCase()) {
       case 'new':
-        return 'badge badge-info text-white font-bold';
+        return 'badge badge-neutral text-white font-bold';
       case 'contacted':
         return 'badge badge-primary text-white font-bold';
       case 'interviewing':
         return 'badge badge-secondary text-white font-bold';
       case 'offered':
-        return 'badge badge-accent text-white font-bold';
+        return 'badge badge-warning text-white font-bold';
       case 'hired':
         return 'badge badge-success text-white font-bold';
       case 'rejected':
